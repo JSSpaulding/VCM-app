@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Forensic Virtual Comparison Microscope</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, sans-serif;
+  background: #050505;
+  color: #ddd;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  font-size: 12px;
+}
+button {
+  background: #1e1e1e;
+  color: #ccc;
+  border: 1px solid #444;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  border-radius: 2px;
+}
+button:hover { background: #2a2a2a; border-color: #666; }
+button.active { background: #1a3a1a; border-color: #4a8; color: #7ec; }
+select, input[type=text] {
+  background: #1a1a1a;
+  color: #ccc;
+  border: 1px solid #444;
+  padding: 2px 5px;
+  font-size: 11px;
+}
+input[type=range] { width: 100%; accent-color: #4a8; cursor: pointer; }
+label { display: flex; align-items: center; gap: 4px; margin: 2px 0; }
+label span { flex: 1; color: #aaa; white-space: nowrap; }
+
+/* ── Header ──────────────────────────────────────────────── */
+header {
+  padding: 5px 10px;
+  background: #0e0e0e;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+header h1 { font-size: 14px; font-weight: 600; color: #9ec; white-space: nowrap; margin-right: 6px; }
+header h3 { font-size: 12px; font-weight: 450; color: rgb(195, 195, 195); white-space: nowrap; margin-right: 6px; }
+#toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+#toolbar span { color: #888; }
+.toolbar-sep { width: 1px; height: 18px; background: #333; margin: 0 2px; }
+
+/* ── Footer ──────────────────────────────────────────────── */
+footer {
+      display: flex;
+      justify-content: space-between; /* Pushes content to far left and far right */
+      align-items: center;           /* Vertically centers both items on the line */
+      padding: 6px 12px;                 /* Adds breathing room around the content */
+      font-size: 12px;
+      background: #111;
+      border-top: 1px solid #333;
+      color: #ffffff;
+    }
+
+    footer p, footer a {
+      margin: 0;               /* Removes browser-default vertical margins */
+      line-height: 1.2;        /* Shrinks the vertical text box height */
+      font-size: 12px;         /* Slightly smaller font saves extra vertical space */
+}
+
+    /* Optional spacing for links on the right side */
+    .footer-right a {
+      text-decoration: none;
+      color: #9ec;
+}
+
+/* ── Main layout ─────────────────────────────────────────── */
+#main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 230px;
+  min-height: 0;
+  background: #080808;
+}
+
+/* ── View panels ─────────────────────────────────────────── */
+.view-wrap {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #222;
+  min-height: 0;
+  position: relative;
+}
+.view-wrap:last-of-type { border-right: none; }
+
+.view-header {
+  padding: 4px 8px;
+  background: #111;
+  border-bottom: 1px solid #222;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.view-title { font-size: 11px; font-weight: 600; color: #8bd; flex: 1; }
+.view-title.right { color: #da8; }
+.view-obj-select {
+  background: #1a1a1a;
+  color: #aaa;
+  border: 1px solid #333;
+  padding: 1px 4px;
+  font-size: 10px;
+}
+.stage-readout {
+  font-size: 10px;
+  color: #555;
+  font-family: monospace;
+  margin-left: auto;
+  letter-spacing: 0.02em;
+}
+
+.view {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+canvas { width: 100%; height: 100%; display: block; }
+
+/* Overlays on canvas */
+.view-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Crosshair */
+.crosshair::before,
+.crosshair::after {
+  content: "";
+  position: absolute;
+  background: rgba(255,255,255,0.18);
+}
+.crosshair::before { width: 1px; height: 100%; left: 50%; }
+.crosshair::after  { height: 1px; width: 100%; top: 50%; }
+
+/* Sample name badge */
+.sample-badge {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+  background: rgba(0,0,0,0.6);
+  padding: 2px 8px;
+  border-radius: 2px;
+  pointer-events: none;
+  white-space: nowrap;
+  display: none;
+}
+
+/* Zoom/mag badge */
+.zoom-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 10px;
+  font-family: monospace;
+  color: #6cf;
+  background: rgba(0,0,0,0.7);
+  padding: 2px 5px;
+  pointer-events: none;
+}
+
+/* Measurement tooltip */
+.measure-tip {
+  position: absolute;
+  background: rgba(0,0,0,0.8);
+  color: #ff9;
+  font-size: 10px;
+  font-family: monospace;
+  padding: 2px 6px;
+  border-radius: 2px;
+  pointer-events: none;
+  display: none;
+  white-space: nowrap;
+}
+
+/* ── Side panel ──────────────────────────────────────────── */
+#sidePanel {
+  background: #0d0d0d;
+  border-left: 1px solid #222;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
+}
+.section {
+  padding: 8px;
+  border-bottom: 1px solid #1a1a1a;
+}
+.section h2 {
+  font-size: 11px;
+  font-weight: 600;
+  color: #7aa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.row { display: flex; gap: 4px; align-items: center; margin: 2px 0; flex-wrap: wrap; }
+.row button { flex: 1; }
+.hint { font-size: 10px; color: #555; margin-top: 3px; line-height: 1.4; }
+
+/* Thumbnail gallery */
+#galleryScroll {
+  --thumb-row-h: 117px; /* thumb (100px) + gap (2px) + label (15px) */
+  max-height: calc(5 * (var(--thumb-row-h) + 4px) - 4px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a #111;
+}
+#galleryScroll::-webkit-scrollbar { width: 5px; }
+#galleryScroll::-webkit-scrollbar-track { background: #111; }
+#galleryScroll::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
+#galleryScroll::-webkit-scrollbar-thumb:hover { background: #555; }
+
+#thumbGallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+.thumb-item { display: flex; flex-direction: column; gap: 2px; }
+.thumb {
+  width: 100%; height: 100px; object-fit: cover;
+  border: 1px solid #333; cursor: pointer; display: block;
+  transition: border-color 0.15s;
+  flex-shrink: 0;
+}
+.thumb:hover { border-color: #7aa; }
+.thumb-name { font-size: 9px; color: #666; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 15px; }
+
+/* Lighting diagram */
+#lightDiagram {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 1px solid #333;
+  position: relative;
+  background: radial-gradient(circle at 50% 50%, #1a1a1a 40%, #0a0a0a);
+  flex-shrink: 0;
+  cursor: crosshair;
+}
+#lightVector {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 24px; height: 2px;
+  background: #fa0;
+  transform-origin: 0 50%;
+  border-radius: 1px;
+}
+#lightVector::after {
+  content: '●';
+  position: absolute;
+  right: -8px;
+  top: -5px;
+  font-size: 8px;
+  color: #fa0;
+}
+.light-controls { flex: 1; }
+
+/* Active view highlight */
+.view-wrap.active-view .view-header { border-bottom-color: #4a8; }
+.view-wrap.active-view .view-title { color: #7ec; }
+.view-wrap.active-view:nth-child(2) .view-title { color: #ec7; }
+</style>
+
+<!-- SVG filter defs for oblique illumination (directional emboss) -->
+<svg id="svgFilters" xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- Emboss kernels for 8 light directions (N, NE, E, SE, S, SW, W, NW) -->
+    <filter id="emboss0"  x="-20%" y="-20%" width="140%" height="140%">
+      <feConvolveMatrix order="3" kernelMatrix="-1 -1  1  -1  1  1   1  1  -1" preserveAlpha="true"/>
+    </filter>
+    <filter id="emboss45" x="-20%" y="-20%" width="140%" height="140%">
+      <feConvolveMatrix order="3" kernelMatrix="-1  1  1  -1  1  1  -1 -1  1" preserveAlpha="true"/>
+    </filter>
+    <filter id="emboss90" x="-20%" y="-20%" width="140%" height="140%">
+      <feConvolveMatrix order="3" kernelMatrix=" 1  1  1  -1  1 -1  -1 -1 -1" preserveAlpha="true"/>
+    </filter>
+    <filter id="emboss135" x="-20%" y="-20%" width="140%" height="140%">
+      <feConvolveMatrix order="3" kernelMatrix=" 1  1 -1   1  1 -1  -1 -1 -1" preserveAlpha="true"/>
+    </filter>
+    <filter id="emboss180" x="-20%" y="-20%" width="140%" height="140%">
+      <feConvolveMatrix order="3" kernelMatrix=" 1  1 -1   1  1 -1  -1 -1  1" preserveAlpha="true"/>
+    </filter>
+    <filter id="emboss225" x="-20%" y="-20%" width="140%" height="140%">
+      <feConvolveMatrix order="3" kernelMatrix=" 1 -1 -1   1  1 -1   1 -1 -1" preserveAlpha="true"/>
+    </filter>
+    <filter id="emboss270" x="-20%" y="-20%" width="140%" height="140%">
+      <feConvolveMatrix order="3" kernelMatrix="-1 -1 -1  -1  1  1   1  1  1" preserveAlpha="true"/>
+    </filter>
+    <filter id="emboss315" x="-20%" y="-20%" width="140%" height="140%">
+      <feConvolveMatrix order="3" kernelMatrix="-1 -1  1  -1  1  1   1 -1 -1" preserveAlpha="true"/>
+    </filter>
+    <filter id="embossNone" x="-20%" y="-20%" width="140%" height="140%">
+      <feConvolveMatrix order="3" kernelMatrix="0 0 0 0 1 0 0 0 0" preserveAlpha="true"/>
+    </filter>
+    <!-- Shallow DOF: strong radial blur -->
+    <filter id="dofFilter" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+    </filter>
+  </defs>
+</svg>
+
+</head>
+<body>
+
+<header>
+  <h1>Forensic Virtual Comparison Microscope v.2.2.0. <br> <span><h3>JS Spaulding (2026)</h3></span></h1>
+  <div id="toolbar">
+    <span>Q (Left):</span>
+    <input type="file" id="fileLeft" accept="image/*"/>
+    <span>K (Right):</span>
+    <input type="file" id="fileRight" accept="image/*"/>
+    <div class="toolbar-sep"></div>
+    <span>Mode:</span>
+    <select id="modeSelect">
+      <option value="independent">Independent</option>
+      <option value="locked">Locked</option>
+      <option value="overlay">Overlay</option>
+    </select>
+    <div class="toolbar-sep"></div>
+    <span>Specimen:</span>
+    <select id="specimenType">
+      <option value="cc-basic">Cartridge Case — Basic</option>
+      <option value="cc-intermediate">Cartridge Case — Intermediate</option>
+      <option value="cc-advanced">Cartridge Case — Advanced</option>
+      <option value="bullet-basic">Fired Bullet — Basic</option>
+      <option value="bullet-intermediate">Fired Bullet — Intermediate</option>     
+      <option value="bullet-advanced">Fired Bullet — Advanced</option>
+      <option value="toolmark">Toolmark</option>
+    </select>
+    <span>Rot step:</span>
+    <select id="rotateStep">
+      <option value="0.1">0.1°</option>
+      <option value="0.5">0.5°</option>
+      <option value="1" selected>1°</option>
+      <option value="5">5°</option>
+    </select>
+    <button id="resetBoth">↺ Reset Both</button>
+    <button id="btnAutoLevel">Auto Level</button>
+  </div>
+</header>
+
+
+<div id="main" style="flex:1;display:grid;grid-template-columns:1fr 1fr 230px;min-height:0;">
+
+  <!-- ── Left View ─────────────────────────── -->
+  <div class="view-wrap" id="wrapLeft">
+    <div class="view-header">
+      <span class="view-title" id="leftTitle">Questioned — Cartridge Case</span>
+      <select class="view-obj-select" id="objLeft">
+        <option value="1">1×</option>
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+        <option value="10" selected>10×</option>
+        <option value="20">20×</option>
+        <option value="40">40×</option>
+        <option value="63">63×</option>
+      </select>
+      <span class="stage-readout" id="readoutLeft">X: 0.000  Y: 0.000  R: 0.0°</span>
+    </div>
+    <div class="view" id="viewLeft">
+      <canvas id="canvasLeft"></canvas>
+      <div class="view-overlay crosshair" id="crosshairLeft"></div>
+      <div class="zoom-badge" id="zoomLeft">1.00×</div>
+      <div class="sample-badge" id="badgeLeft"></div>
+      <div class="measure-tip" id="measureTipLeft"></div>
+    </div>
+  </div>
+
+  <!-- ── Right View ────────────────────────── -->
+  <div class="view-wrap" id="wrapRight">
+    <div class="view-header">
+      <span class="view-title right" id="rightTitle">Known — Cartridge Case</span>
+      <select class="view-obj-select" id="objRight">
+        <option value="1">1×</option>
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+        <option value="10" selected>10×</option>
+        <option value="20">20×</option>
+        <option value="40">40×</option>
+        <option value="63">63×</option>
+      </select>
+      <span class="stage-readout" id="readoutRight">X: 0.000  Y: 0.000  R: 0.0°</span>
+    </div>
+    <div class="view" id="viewRight">
+      <canvas id="canvasRight"></canvas>
+      <div class="view-overlay crosshair" id="crosshairRight"></div>
+      <div class="zoom-badge" id="zoomRight">1.00×</div>
+      <div class="sample-badge" id="badgeRight"></div>
+      <div class="measure-tip" id="measureTipRight"></div>
+    </div>
+  </div>
+
+  <!-- ── Side Panel ─────────────────────────── -->
+  <div id="sidePanel">
+
+    <!-- Sample Gallery -->
+    <div class="section">
+      <h2>Sample Gallery</h2>
+      <label><span>Load into:</span>
+        <select id="thumbTarget">
+          <option value="left">Left (Q)</option>
+          <option value="right">Right (K)</option>
+        </select>
+      </label>
+      <div id="galleryScroll">
+      <div id="thumbGallery">
+        <!-- populated by JS based on selected specimen category -->
+      </div>
+      </div>
+    </div>
+
+    <!-- Illumination -->
+    <div class="section">
+      <h2>Illumination</h2>
+      <div class="row" style="gap:8px; align-items:flex-start;">
+        <div id="lightDiagram" title="Click to set light angle">
+          <div id="lightVector"></div>
+        </div>
+        <div class="light-controls">
+          <label><span>Intensity</span>
+            <input type="range" id="lightIntensity" min="0" max="100" value="60">
+          </label>
+          <label><span>Coaxial mix</span>
+            <input type="range" id="coaxialMix" min="0" max="100" value="30">
+          </label>
+          <label><span>Oblique angle</span>
+            <input type="range" id="lightAngle" min="0" max="360" value="45">
+          </label>
+        </div>
+      </div>
+      <label style="margin-top:4px;"><span>Focus depth</span>
+        <input type="range" id="focusDepth" min="0" max="100" value="0">
+      </label>
+      <div class="hint">Drag angle dial or use slider. Oblique light rakes striation surfaces for relief.</div>
+    </div>
+
+    <!-- Image Controls -->
+    <div class="section">
+      <h2>Image Controls</h2>
+      <label><span>Brightness</span>
+        <input type="range" id="brightness" min="-100" max="100" step="5" value="0">
+      </label>
+      <label><span>Contrast</span>
+        <input type="range" id="contrast" min="0.5" max="3" step="0.1" value="1">
+      </label>
+      <label><span>Vignette</span>
+        <input type="range" id="vignetteIntensity" min="0" max="1" step="0.05" value="0.35">
+      </label>
+      <label><input type="checkbox" id="edgeEnhance"> Edge enhance (sharpen)</label>
+      <label><span>Channel:</span>
+        <select id="channelSelect">
+          <option value="rgb">RGB (full)</option>
+          <option value="r">Red only</option>
+          <option value="g">Green only</option>
+          <option value="b">Blue only</option>
+          <option value="gray">Grayscale</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- Optics -->
+    <div class="section">
+      <h2>Optics</h2>
+      <label><span>Overlay opacity</span>
+        <input type="range" id="overlayOpacity" min="0" max="1" step="0.05" value="0.5">
+      </label>
+    </div>
+
+    <!-- Alignment -->
+    <div class="section">
+      <h2>Alignment</h2>
+      <div class="row">
+        <button id="setTieLeft">Set tie-pt (L)</button>
+        <button id="setTieRight">Set tie-pt (R)</button>
+      </div>
+      <div class="row"><button id="alignTiePoints" style="width:100%">Align to tie points</button></div>
+      <div class="hint">Set a matching mark in each view, then Align to snap them together.</div>
+    </div>
+
+    <!-- Measurement -->
+    <div class="section">
+      <h2>Measurement</h2>
+      <div class="row">
+        <button id="btnMeasure" title="Drag in a view to measure">📏 Ruler</button>
+        <button id="btnClearMeasure">Clear</button>
+      </div>
+      <div id="measureReadout" style="font-size:10px;color:#9a9;margin-top:3px;font-family:monospace;">—</div>
+      <div class="hint">Select Ruler, then click-drag in either view.</div>
+    </div>
+
+    <!-- Annotations -->
+    <div class="section">
+      <h2>Annotations</h2>
+      <label><span>Mode:</span>
+        <select id="annotationMode">
+          <option value="none">None</option>
+          <option value="point">Point marker</option>
+          <option value="arrow">Arrow</option>
+          <option value="label">Label</option>
+          <option value="roi">ROI (rectangle)</option>
+        </select>
+      </label>
+      <label><span>On:</span>
+        <select id="annotationSide">
+          <option value="left">Left (Q)</option>
+          <option value="right">Right (K)</option>
+        </select>
+      </label>
+      <label><span>Text:</span>
+        <input type="text" id="annotationText" style="width:100%">
+      </label>
+      <div class="row" style="margin-top:4px;">
+        <button id="btnClearAnnotations">Clear all</button>
+      </div>
+    </div>
+
+
+  </div><!-- /sidePanel -->
+</div><!-- /main -->
+
+<footer>
+  <div class="footer-left">
+    <p><b><u>User Controls:</u></b> Click a view to make it active. Mouse: drag = pan, wheel = zoom. A/D keys = rotate active view. Arrow keys = fine adjustment.</p>
+  </div>
+  <div class="footer-right">
+    <p>&copy; 2026 Jamie Spaulding. Licensed under the&nbsp;<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer">Creative Commons Attribution 4.0 International License (CC BY 4.0)</a>.
+    </p>
+  </div>
+</footer>
+
+<script>
+
+// ─── Viewer class ────────────────────────────────────────────────────────────
+class Viewer {
+  constructor(canvas, side) {
+    this.canvas = canvas;
+    this.ctx    = canvas.getContext('2d');
+    this.side   = side; // 'left' | 'right'
+    this.image  = null;
+
+    // Transform state
+    this.scale    = 1;
+    this.rotation = 0;
+    this.offsetX  = 0;
+    this.offsetY  = 0;
+
+    // Interaction state
+    this.dragging    = false;
+    this.lastX = this.lastY = 0;
+    this.measureActive = false;
+    this.measureStart  = null;
+    this.measureEnd    = null;
+    this.roiStart      = null;
+    this.roiDrawing    = false;
+
+    // Display settings
+    this.brightness   = 0;
+    this.contrast     = 1;
+    this.edgeEnhance  = false;
+    this.vignetteIntensity = 0.35;
+    this.lightAngle   = 45;
+    this.lightIntensity = 60;
+    this.coaxialMix   = 30;
+    this.focusDepth   = 0;
+    this.channel      = 'rgb';
+    this.objectiveMag = 10;
+    this.autoLeveled  = false;
+
+    // Overlays
+    this.tiePoint   = null;
+    this.annotations = [];
+    this.measurements = [];
+
+    this.initEvents();
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  setImage(img) {
+    this.image = img;
+    this.autoLeveled = false;
+    this.reset();
+  }
+
+  reset() {
+    this.scale      = 1;
+    this.rotation   = 0;
+    this.offsetX    = 0;
+    this.offsetY    = 0;
+    this.objectiveMag = 10;  // restore default objective
+    this.tiePoint   = null;
+    this.annotations = [];
+    this.measurements = [];
+    this.measureStart = this.measureEnd = null;
+    this.draw();
+  }
+
+  resize() {
+    const rect = this.canvas.getBoundingClientRect();
+    this.canvas.width  = Math.round(rect.width  || 600);
+    this.canvas.height = Math.round(rect.height || 500);
+    this.draw();
+  }
+
+  // ── Transform helpers ─────────────────────────────────────
+  canvasToImage(cx, cy) {
+    const dx = cx - (this.canvas.width  / 2 + this.offsetX);
+    const dy = cy - (this.canvas.height / 2 + this.offsetY);
+    const cos = Math.cos(-this.rotation), sin = Math.sin(-this.rotation);
+    return {
+      x: (dx * cos - dy * sin) / this.scale,
+      y: (dx * sin + dy * cos) / this.scale
+    };
+  }
+
+  imageToCanvas(ix, iy) {
+    const cos = Math.cos(this.rotation), sin = Math.sin(this.rotation);
+    return {
+      x: (ix * cos - iy * sin) * this.scale + this.canvas.width  / 2 + this.offsetX,
+      y: (ix * sin + iy * cos) * this.scale + this.canvas.height / 2 + this.offsetY
+    };
+  }
+
+  // ── Actions ───────────────────────────────────────────────
+  zoom(delta, cx, cy) {
+    const factor = Math.exp(delta * -0.001);
+    const old = this.scale;
+    this.scale *= factor;
+    const dx = cx - this.canvas.width  / 2 - this.offsetX;
+    const dy = cy - this.canvas.height / 2 - this.offsetY;
+    this.offsetX += dx - dx * (this.scale / old);
+    this.offsetY += dy - dy * (this.scale / old);
+    this.draw();
+    updateReadout(this.side);
+  }
+
+  pan(dx, dy) {
+    this.offsetX += dx;
+    this.offsetY += dy;
+    this.draw();
+    updateReadout(this.side);
+  }
+
+  rotate(deltaDeg) {
+    this.rotation += deltaDeg * Math.PI / 180;
+    this.draw();
+    updateReadout(this.side);
+  }
+
+  setObjective(mag) {
+    const ratio = mag / this.objectiveMag;
+    this.objectiveMag = mag;
+    this.scale *= ratio;
+    this.draw();
+    updateReadout(this.side);
+  }
+
+  setTone(brightness, contrast, edgeEnhance, vignette, lightAngle, lightIntensity, coaxialMix, focusDepth, channel) {
+    this.brightness = brightness;
+    this.contrast   = contrast;
+    this.edgeEnhance = edgeEnhance;
+    this.vignetteIntensity = vignette;
+    this.lightAngle  = lightAngle;
+    this.lightIntensity = lightIntensity;
+    this.coaxialMix  = coaxialMix;
+    this.focusDepth  = focusDepth;
+    this.channel     = channel;
+    this.draw();
+  }
+
+  setTiePoint(x, y) {
+    const ip = this.canvasToImage(x, y);
+    this.tiePoint = ip;
+    this.draw();
+  }
+
+  addAnnotation(type, x, y, text) {
+    const ip = this.canvasToImage(x, y);
+    this.annotations.push({ type, x: ip.x, y: ip.y, text,
+      roiEnd: null, roiDrawing: type === 'roi' });
+    this.draw();
+  }
+
+  // ── Build CSS filter string ───────────────────────────────
+  buildFilter() {
+    const bPct = Math.round(100 + this.brightness);
+    const cPct = Math.round(this.contrast * 100);
+
+    // Oblique illumination: pick nearest emboss kernel
+    const useOblique = this.lightIntensity > 5;
+    const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+    const nearestAngle = angles.reduce((best, a) => {
+      const diff = Math.abs(((this.lightAngle - a + 540) % 360) - 180);
+      return diff < Math.abs(((this.lightAngle - best + 540) % 360) - 180) ? a : best;
+    }, 0);
+    const embossId = useOblique ? `emboss${nearestAngle}` : 'embossNone';
+    const obliqueStr = `url(#${embossId})`;
+
+    // Coaxial mix: a second brightness pass that softens the emboss
+    const coaxBright = Math.round(100 + (this.coaxialMix / 100) * 40);
+
+    // Channel isolation
+    let channelFilter = '';
+    if (this.channel === 'gray') {
+      channelFilter = ' saturate(0%)';
+    } else if (this.channel === 'r') {
+      channelFilter = ' saturate(0%) hue-rotate(0deg) brightness(120%)';
+    } else if (this.channel === 'g') {
+      channelFilter = ' saturate(0%) hue-rotate(120deg) brightness(120%)';
+    } else if (this.channel === 'b') {
+      channelFilter = ' saturate(0%) hue-rotate(240deg) brightness(120%)';
+    }
+
+    let f = `brightness(${bPct}%) contrast(${cPct}%)`;
+    if (useOblique) {
+      const obliqueIntensity = this.lightIntensity / 100;
+      // Increase contrast proportional to oblique intensity to simulate relief shadows
+      const reliefContrast = Math.round(100 + obliqueIntensity * 120);
+      f += ` ${obliqueStr} contrast(${reliefContrast}%) brightness(${coaxBright}%)`;
+    }
+    if (this.edgeEnhance) f += ' contrast(250%) brightness(105%)';
+    if (channelFilter) f += channelFilter;
+    return f;
+  }
+
+  // ── Draw ──────────────────────────────────────────────────
+  drawBaseImage() {
+    const ctx = this.ctx;
+    const w = this.canvas.width, h = this.canvas.height;
+
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.restore();
+
+    if (!this.image) return;
+
+    const filterStr = this.buildFilter();
+    const iw = this.image.width, ih = this.image.height;
+
+    ctx.save();
+    ctx.translate(w/2 + this.offsetX, h/2 + this.offsetY);
+    ctx.rotate(this.rotation);
+    ctx.scale(this.scale, this.scale);
+    ctx.filter = filterStr;
+    ctx.drawImage(this.image, -iw/2, -ih/2);
+    ctx.filter = 'none';
+    ctx.restore();
+
+    // Focus depth: simulated DOF — radial blur vignette darkening toward edges
+    if (this.focusDepth > 5) {
+      this.drawFocusBlur();
+    }
+
+    this.drawVignette();
+    this.drawMeasurements();
+    this.drawTiePoint();
+    this.drawAnnotations();
+  }
+
+  drawFocusBlur() {
+    // Simulate shallow DOF: semi-transparent dark radial gradient + edge softening hint
+    const ctx = this.ctx;
+    const w = this.canvas.width, h = this.canvas.height;
+    const intensity = this.focusDepth / 100;
+    const r = Math.min(w, h) * (0.25 + (1 - intensity) * 0.3);
+
+    const grad = ctx.createRadialGradient(w/2, h/2, r * 0.6, w/2, h/2, Math.max(w, h));
+    grad.addColorStop(0,   'rgba(0,0,0,0)');
+    grad.addColorStop(0.5, `rgba(0,0,0,${intensity * 0.3})`);
+    grad.addColorStop(1,   `rgba(0,0,0,${intensity * 0.75})`);
+    ctx.save();
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  drawVignette() {
+    const ctx = this.ctx;
+    const w = this.canvas.width, h = this.canvas.height;
+    const i = this.vignetteIntensity;
+    if (i <= 0) return;
+    const grad = ctx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.1, w/2, h/2, Math.max(w,h)*0.75);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, `rgba(0,0,0,${i})`);
+    ctx.save();
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  drawTiePoint() {
+    if (!this.tiePoint) return;
+    const ctx = this.ctx;
+    const cp = this.imageToCanvas(this.tiePoint.x, this.tiePoint.y);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,255,128,0.85)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cp.x, cp.y, 8, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cp.x-5, cp.y); ctx.lineTo(cp.x+5, cp.y);
+    ctx.moveTo(cp.x, cp.y-5); ctx.lineTo(cp.x, cp.y+5);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawAnnotations() {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.font = '11px system-ui';
+
+    for (const ann of this.annotations) {
+      const cp = this.imageToCanvas(ann.x, ann.y);
+      ctx.strokeStyle = 'rgba(255,220,50,0.9)';
+      ctx.fillStyle   = 'rgba(255,220,50,0.9)';
+      ctx.lineWidth   = 1.5;
+
+      if (ann.type === 'point') {
+        ctx.beginPath();
+        ctx.arc(cp.x, cp.y, 5, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cp.x-3, cp.y); ctx.lineTo(cp.x+3, cp.y);
+        ctx.moveTo(cp.x, cp.y-3); ctx.lineTo(cp.x, cp.y+3);
+        ctx.stroke();
+
+      } else if (ann.type === 'arrow') {
+        const len = 18;
+        ctx.beginPath();
+        ctx.moveTo(cp.x - len, cp.y);
+        ctx.lineTo(cp.x, cp.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cp.x, cp.y);
+        ctx.lineTo(cp.x - 6, cp.y - 4);
+        ctx.lineTo(cp.x - 6, cp.y + 4);
+        ctx.closePath();
+        ctx.fill();
+
+      } else if (ann.type === 'label') {
+        ctx.beginPath();
+        ctx.arc(cp.x, cp.y, 3, 0, Math.PI*2);
+        ctx.fill();
+        if (ann.text) {
+          ctx.fillStyle = 'rgba(255,220,50,0.95)';
+          ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+          ctx.lineWidth = 3;
+          ctx.strokeText(ann.text, cp.x + 7, cp.y - 4);
+          ctx.fillText(ann.text, cp.x + 7, cp.y - 4);
+        }
+
+      } else if (ann.type === 'roi') {
+        const endPt = ann.roiEnd ? this.imageToCanvas(ann.roiEnd.x, ann.roiEnd.y) : cp;
+        ctx.strokeStyle = 'rgba(50,200,255,0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.strokeRect(cp.x, cp.y, endPt.x - cp.x, endPt.y - cp.y);
+        ctx.setLineDash([]);
+        if (ann.text) {
+          ctx.fillStyle = 'rgba(50,200,255,0.9)';
+          ctx.fillText(ann.text, cp.x + 3, cp.y - 4);
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  drawMeasurements() {
+    if (!this.measureStart || !this.measureEnd) return;
+    const ctx = this.ctx;
+    const s = this.imageToCanvas(this.measureStart.x, this.measureStart.y);
+    const e = this.imageToCanvas(this.measureEnd.x,   this.measureEnd.y);
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,160,0,0.9)';
+    ctx.fillStyle   = 'rgba(255,160,0,0.9)';
+    ctx.lineWidth   = 1.5;
+
+    // Line with end ticks
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y); ctx.lineTo(e.x, e.y);
+    ctx.stroke();
+
+    const ang = Math.atan2(e.y - s.y, e.x - s.x);
+    const perp = ang + Math.PI/2;
+    const tick = 6;
+    [[s.x, s.y],[e.x, e.y]].forEach(([px, py]) => {
+      ctx.beginPath();
+      ctx.moveTo(px + Math.cos(perp)*tick, py + Math.sin(perp)*tick);
+      ctx.lineTo(px - Math.cos(perp)*tick, py - Math.sin(perp)*tick);
+      ctx.stroke();
+    });
+
+    // Distance label — pixel count only (no calibration data)
+    const pxDist    = Math.hypot(e.x - s.x, e.y - s.y);
+    const imgPxDist = pxDist / this.scale;
+    const distLabel = `${Math.round(imgPxDist)} px`;
+    const mx = (s.x + e.x) / 2, my = (s.y + e.y) / 2;
+    ctx.font = '11px monospace';
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+    ctx.lineWidth = 3;
+    ctx.strokeText(distLabel, mx + 5, my - 6);
+    ctx.fillStyle = 'rgba(255,200,50,0.95)';
+    ctx.fillText(distLabel, mx + 5, my - 6);
+
+    // Update side readout
+    document.getElementById('measureReadout').textContent = distLabel;
+
+    ctx.restore();
+  }
+
+  draw() { this.drawBaseImage(); }
+
+  // ── Events ────────────────────────────────────────────────
+  initEvents() {
+    const c = this.canvas;
+
+    c.addEventListener('mousedown', (e) => {
+      const rect = c.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Tie point mode
+      if (tieMode === this.side) {
+        this.setTiePoint(x, y);
+        tieMode = null;
+        drawOverlayIfNeeded();
+        return;
+      }
+
+      // Measure mode
+      if (measureMode) {
+        this.measureStart = this.canvasToImage(x, y);
+        this.measureEnd   = null;
+        this.dragging = false;
+        this._measuring = true;
+        return;
+      }
+
+      // Annotation click
+      const aMode = document.getElementById('annotationMode').value;
+      const aSide = document.getElementById('annotationSide').value;
+      if (aMode !== 'none' && aSide === this.side) {
+        if (aMode === 'roi') {
+          this.roiStart   = this.canvasToImage(x, y);
+          this.roiDrawing = true;
+          this.dragging   = false;
+          return;
+        }
+        const text = document.getElementById('annotationText').value;
+        this.addAnnotation(aMode, x, y, text);
+        drawOverlayIfNeeded();
+        return;
+      }
+
+      this.dragging = true;
+      this.lastX = e.clientX;
+      this.lastY = e.clientY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      const rect = c.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (this._measuring) {
+        this.measureEnd = this.canvasToImage(x, y);
+        this.draw();
+        return;
+      }
+
+      if (this.roiDrawing) {
+        // Update last roi annotation's end
+        const last = this.annotations[this.annotations.length - 1];
+        if (last && last.type === 'roi') {
+          last.roiEnd = this.canvasToImage(x, y);
+        } else if (this.roiStart) {
+          const text = document.getElementById('annotationText').value;
+          const cp = this.imageToCanvas(this.roiStart.x, this.roiStart.y);
+          this.annotations.push({ type: 'roi', x: this.roiStart.x, y: this.roiStart.y,
+            roiEnd: this.canvasToImage(x, y), text, roiDrawing: true });
+        }
+        this.draw();
+        return;
+      }
+
+      if (!this.dragging) return;
+      const dx = e.clientX - this.lastX;
+      const dy = e.clientY - this.lastY;
+      this.lastX = e.clientX;
+      this.lastY = e.clientY;
+      this.pan(dx, dy);
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (this._measuring) {
+        this._measuring = false;
+        this.draw();
+      }
+      if (this.roiDrawing) {
+        this.roiDrawing = false;
+        const last = this.annotations[this.annotations.length - 1];
+        if (last && last.roiDrawing) last.roiDrawing = false;
+        this.draw();
+      }
+      this.dragging = false;
+    });
+
+    c.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const rect = c.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      this.zoom(e.deltaY, cx, cy);
+    }, { passive: false });
+
+    // Active view on click
+    c.addEventListener('mousedown', () => {
+      setActiveViewer(this.side === 'left' ? viewerLeft : viewerRight, this.side);
+    });
+  }
+}
+
+// ─── Utilities ───────────────────────────────────────────────────────────────
+function stripExt(fn) { return fn.replace(/\.[^/.]+$/, ''); }
+
+function updateReadout(side) {
+  const v = side === 'left' ? viewerLeft : viewerRight;
+  const rotDeg = (v.rotation * 180 / Math.PI).toFixed(1);
+  document.getElementById(`readout${side === 'left' ? 'Left' : 'Right'}`).textContent =
+    `X: ${Math.round(v.offsetX)} px  Y: ${Math.round(v.offsetY)} px  R: ${rotDeg}°`;
+  document.getElementById(`zoom${side === 'left' ? 'Left' : 'Right'}`).textContent =
+    `${v.scale.toFixed(2)}× (obj ${v.objectiveMag}×)`;
+}
+
+// ─── Global state ────────────────────────────────────────────────────────────
+const canvasLeft  = document.getElementById('canvasLeft');
+const canvasRight = document.getElementById('canvasRight');
+const viewerLeft  = new Viewer(canvasLeft,  'left');
+const viewerRight = new Viewer(canvasRight, 'right');
+
+let activeViewer = viewerLeft;
+let mode = 'independent';
+let tieMode = null;
+let measureMode = false;
+
+function setActiveViewer(v, side) {
+  activeViewer = v;
+  document.getElementById('wrapLeft').classList.toggle('active-view',  side === 'left');
+  document.getElementById('wrapRight').classList.toggle('active-view', side === 'right');
+}
+setActiveViewer(viewerLeft, 'left');
+
+// ─── Sync helpers ─────────────────────────────────────────────────────────────
+function syncFrom(src, tgt) {
+  tgt.scale    = src.scale;
+  tgt.rotation = src.rotation;
+  tgt.offsetX  = src.offsetX;
+  tgt.offsetY  = src.offsetY;
+  tgt.draw();
+  updateReadout(tgt.side);
+}
+
+// Wrap pan/zoom for locked mode.
+// In locked mode we apply the same DELTA to both viewers rather than copying
+// absolute state — this way each field keeps its own independent position when
+// switching into locked mode, and both fields move/zoom by the same amount
+// from wherever they each currently are.
+
+const origPanL = viewerLeft.pan.bind(viewerLeft);
+viewerLeft.pan = (dx, dy) => {
+  origPanL(dx, dy);
+  if (mode === 'locked') {
+    origPanR(dx, dy);
+    updateReadout('right');
+    drawOverlayIfNeeded();
+  }
+};
+const origPanR = viewerRight.pan.bind(viewerRight);
+viewerRight.pan = (dx, dy) => {
+  origPanR(dx, dy);
+  if (mode === 'locked') {
+    origPanL(dx, dy);
+    updateReadout('left');
+    drawOverlayIfNeeded();
+  }
+};
+
+const origZoomL = viewerLeft.zoom.bind(viewerLeft);
+viewerLeft.zoom = (d, cx, cy) => {
+  origZoomL(d, cx, cy);
+  updateReadout('left');
+  if (mode === 'locked') {
+    // Zoom the right viewer around its own canvas centre so neither field jumps
+    const rcx = viewerRight.canvas.width  / 2;
+    const rcy = viewerRight.canvas.height / 2;
+    origZoomR(d, rcx, rcy);
+    updateReadout('right');
+  }
+  drawOverlayIfNeeded();
+};
+const origZoomR = viewerRight.zoom.bind(viewerRight);
+viewerRight.zoom = (d, cx, cy) => {
+  origZoomR(d, cx, cy);
+  updateReadout('right');
+  if (mode === 'locked') {
+    const lcx = viewerLeft.canvas.width  / 2;
+    const lcy = viewerLeft.canvas.height / 2;
+    origZoomL(d, lcx, lcy);
+    updateReadout('left');
+  }
+  drawOverlayIfNeeded();
+};
+
+// ─── Overlay draw ─────────────────────────────────────────────────────────────
+function drawOverlayIfNeeded() {
+  if (mode !== 'overlay') {
+    viewerLeft.draw();
+    viewerRight.draw();
+    return;
+  }
+  viewerRight.drawBaseImage();
+  const ctx = viewerRight.ctx;
+  const w = viewerRight.canvas.width, h = viewerRight.canvas.height;
+  if (!viewerLeft.image) return;
+  ctx.save();
+  ctx.globalAlpha = parseFloat(document.getElementById('overlayOpacity').value || '0.5');
+  ctx.filter = viewerLeft.buildFilter();
+  ctx.translate(w/2 + viewerLeft.offsetX, h/2 + viewerLeft.offsetY);
+  ctx.rotate(viewerLeft.rotation);
+  ctx.scale(viewerLeft.scale, viewerLeft.scale);
+  ctx.drawImage(viewerLeft.image, -viewerLeft.image.width/2, -viewerLeft.image.height/2);
+  ctx.filter = 'none';
+  ctx.restore();
+  viewerRight.drawVignette();
+  viewerRight.drawTiePoint();
+  viewerRight.drawAnnotations();
+}
+
+// ─── File loading ─────────────────────────────────────────────────────────────
+function loadIntoViewer(viewer, side, file) {
+  const blobUrl = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    viewer.setImage(img);
+    setActiveViewer(viewer, side);
+    const name = stripExt(file.name);
+    const badge = document.getElementById(`badge${side === 'left' ? 'Left' : 'Right'}`);
+    badge.textContent = name;
+    badge.style.display = 'block';
+    updateReadout(side);
+    drawOverlayIfNeeded();
+  };
+  img.src = blobUrl;
+  addThumbToGallery(file, blobUrl);
+}
+
+document.getElementById('fileLeft').addEventListener('change', (e) => {
+  if (e.target.files[0]) loadIntoViewer(viewerLeft, 'left', e.target.files[0]);
+});
+document.getElementById('fileRight').addEventListener('change', (e) => {
+  if (e.target.files[0]) loadIntoViewer(viewerRight, 'right', e.target.files[0]);
+});
+
+function addThumbToGallery(file, blobUrl) {
+  const name = stripExt(file.name);
+  const gallery = document.getElementById('thumbGallery');
+  let existing = gallery.querySelector(`.thumb-item[data-name="${CSS.escape(name)}"]`);
+  if (existing) { existing.querySelector('.thumb').src = blobUrl; return; }
+  const item = document.createElement('div');
+  item.className = 'thumb-item'; item.dataset.name = name;
+  const img = document.createElement('img');
+  img.className = 'thumb'; img.src = blobUrl; img.dataset.path = blobUrl; img.title = name;
+  const lbl = document.createElement('div');
+  lbl.className = 'thumb-name'; lbl.textContent = name;
+  item.append(img, lbl);
+  gallery.appendChild(item);
+  img.addEventListener('click', handleThumbClick);
+}
+
+function handleThumbClick() {
+  const target = document.getElementById('thumbTarget').value;
+  const path   = this.dataset.path;
+  const item   = this.closest('.thumb-item');
+  const name   = item?.dataset.name || stripExt(path.split('/').pop());
+  const img    = new Image();
+  img.onload = () => {
+    const viewer = target === 'left' ? viewerLeft : viewerRight;
+    viewer.setImage(img);
+    setActiveViewer(viewer, target);
+    const badge = document.getElementById(target === 'left' ? 'badgeLeft' : 'badgeRight');
+    badge.textContent = name; badge.style.display = 'block';
+    updateReadout(target);
+    drawOverlayIfNeeded();
+  };
+  img.src = path;
+}
+document.querySelectorAll('.thumb').forEach(t => t.addEventListener('click', handleThumbClick));
+
+// ─── Objective selectors ──────────────────────────────────────────────────────
+document.getElementById('objLeft').addEventListener('change', (e) => {
+  viewerLeft.setObjective(parseInt(e.target.value));
+  updateReadout('left');
+  drawOverlayIfNeeded();
+});
+document.getElementById('objRight').addEventListener('change', (e) => {
+  viewerRight.setObjective(parseInt(e.target.value));
+  updateReadout('right');
+  drawOverlayIfNeeded();
+});
+
+// ─── Mode ─────────────────────────────────────────────────────────────────────
+document.getElementById('modeSelect').addEventListener('change', (e) => {
+  mode = e.target.value;
+  // No position sync on switch — each field keeps its current position.
+  // Locked mode applies incremental deltas to both fields simultaneously.
+  drawOverlayIfNeeded();
+});
+
+// ─── Tone controls ────────────────────────────────────────────────────────────
+function collectTone() {
+  return {
+    brightness:   parseFloat(document.getElementById('brightness').value),
+    contrast:     parseFloat(document.getElementById('contrast').value),
+    edgeEnhance:  document.getElementById('edgeEnhance').checked,
+    vignette:     parseFloat(document.getElementById('vignetteIntensity').value),
+    lightAngle:   parseFloat(document.getElementById('lightAngle').value),
+    lightIntensity: parseFloat(document.getElementById('lightIntensity').value),
+    coaxialMix:   parseFloat(document.getElementById('coaxialMix').value),
+    focusDepth:   parseFloat(document.getElementById('focusDepth').value),
+    channel:      document.getElementById('channelSelect').value
+  };
+}
+function applyTone() {
+  const t = collectTone();
+  [viewerLeft, viewerRight].forEach(v =>
+    v.setTone(t.brightness, t.contrast, t.edgeEnhance, t.vignette,
+              t.lightAngle, t.lightIntensity, t.coaxialMix, t.focusDepth, t.channel));
+  updateLightDiagram(t.lightAngle);
+  drawOverlayIfNeeded();
+}
+['brightness','contrast','vignetteIntensity','edgeEnhance',
+ 'lightAngle','lightIntensity','coaxialMix','focusDepth','channelSelect',
+ 'overlayOpacity'
+].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener(el.tagName === 'SELECT' || el.type === 'checkbox' ? 'change' : 'input', applyTone);
+});
+
+// Light angle dial
+const lightDiagram  = document.getElementById('lightDiagram');
+const lightVector   = document.getElementById('lightVector');
+const lightAngleSlider = document.getElementById('lightAngle');
+function updateLightDiagram(angleDeg) {
+  lightVector.style.transform = `rotate(${angleDeg}deg)`;
+}
+lightDiagram.addEventListener('click', (e) => {
+  const rect = lightDiagram.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top  + rect.height / 2;
+  const angle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI;
+  const norm = ((angle % 360) + 360) % 360;
+  lightAngleSlider.value = norm;
+  applyTone();
+});
+updateLightDiagram(45);
+
+// ─── Auto level ───────────────────────────────────────────────────────────────
+document.getElementById('btnAutoLevel').addEventListener('click', () => {
+  // Approximate auto-level: push brightness to 0 and contrast to a higher value
+  document.getElementById('brightness').value = 5;
+  document.getElementById('contrast').value   = 1.4;
+  applyTone();
+});
+
+// ─── Keyboard ─────────────────────────────────────────────────────────────────
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const step = parseFloat(document.getElementById('rotateStep').value || '1');
+  const v     = activeViewer;
+  const other = v === viewerLeft ? viewerRight : viewerLeft;
+  const otherSide = v === viewerLeft ? 'right' : 'left';
+
+  const alsoOther = (fn) => {
+    if (mode === 'locked') { fn(other); updateReadout(otherSide); }
+    drawOverlayIfNeeded();
+  };
+
+  switch (e.key) {
+    case 'a': case 'A':
+      v.rotate(-step); alsoOther(o => o.rotate(-step)); break;
+    case 'd': case 'D':
+      v.rotate( step); alsoOther(o => o.rotate( step)); break;
+    case 'ArrowUp':
+      e.preventDefault(); v.pan(0, -5); alsoOther(o => o.pan(0, -5)); break;
+    case 'ArrowDown':
+      e.preventDefault(); v.pan(0,  5); alsoOther(o => o.pan(0,  5)); break;
+    case 'ArrowLeft':
+      e.preventDefault(); v.pan(-5, 0); alsoOther(o => o.pan(-5, 0)); break;
+    case 'ArrowRight':
+      e.preventDefault(); v.pan( 5, 0); alsoOther(o => o.pan( 5, 0)); break;
+    case 'Tab':
+      e.preventDefault();
+      setActiveViewer(v === viewerLeft ? viewerRight : viewerLeft,
+                      v === viewerLeft ? 'right' : 'left');
+      break;
+  }
+});
+
+// ─── Reset ────────────────────────────────────────────────────────────────────
+document.getElementById('resetBoth').addEventListener('click', () => {
+  viewerLeft.reset();
+  viewerRight.reset();
+
+  // Reset objective selects to default (10×)
+  document.getElementById('objLeft').value  = '10';
+  document.getElementById('objRight').value = '10';
+
+  // Reset image control sliders to their defaults
+  document.getElementById('brightness').value        = '0';
+  document.getElementById('contrast').value          = '1';
+  document.getElementById('vignetteIntensity').value = '0.35';
+  document.getElementById('edgeEnhance').checked     = false;
+  document.getElementById('channelSelect').value     = 'rgb';
+  document.getElementById('lightAngle').value        = '45';
+  document.getElementById('lightIntensity').value    = '60';
+  document.getElementById('coaxialMix').value        = '30';
+  document.getElementById('focusDepth').value        = '0';
+  document.getElementById('overlayOpacity').value    = '0.5';
+
+  // Reset mode to independent
+  document.getElementById('modeSelect').value = 'independent';
+  mode = 'independent';
+
+  // Re-apply tone defaults to both viewers
+  applyTone();
+  updateLightDiagram(45);
+  updateReadout('left');
+  updateReadout('right');
+
+  // Do NOT clear badges — sample names persist after a full reset
+  drawOverlayIfNeeded();
+});
+
+// ─── Tie points ───────────────────────────────────────────────────────────────
+document.getElementById('setTieLeft').addEventListener('click',  () => { tieMode = 'left';  });
+document.getElementById('setTieRight').addEventListener('click', () => { tieMode = 'right'; });
+document.getElementById('alignTiePoints').addEventListener('click', () => {
+  if (!viewerLeft.tiePoint || !viewerRight.tiePoint) return;
+  const lc = viewerLeft.imageToCanvas(viewerLeft.tiePoint.x,   viewerLeft.tiePoint.y);
+  const rc = viewerRight.imageToCanvas(viewerRight.tiePoint.x, viewerRight.tiePoint.y);
+  viewerLeft.offsetX += rc.x - lc.x;
+  viewerLeft.offsetY += rc.y - lc.y;
+  viewerLeft.draw();
+  updateReadout('left');
+  drawOverlayIfNeeded();
+});
+
+// ─── Measurement ──────────────────────────────────────────────────────────────
+const btnMeasure = document.getElementById('btnMeasure');
+btnMeasure.addEventListener('click', () => {
+  measureMode = !measureMode;
+  btnMeasure.classList.toggle('active', measureMode);
+  btnMeasure.textContent = measureMode ? '📏 Measuring…' : '📏 Ruler';
+  document.body.style.cursor = measureMode ? 'crosshair' : '';
+});
+document.getElementById('btnClearMeasure').addEventListener('click', () => {
+  viewerLeft.measureStart  = viewerLeft.measureEnd  = null;
+  viewerRight.measureStart = viewerRight.measureEnd = null;
+  document.getElementById('measureReadout').textContent = '—';
+  drawOverlayIfNeeded();
+});
+
+// ─── Annotations ──────────────────────────────────────────────────────────────
+document.getElementById('btnClearAnnotations').addEventListener('click', () => {
+  viewerLeft.annotations  = [];
+  viewerRight.annotations = [];
+  drawOverlayIfNeeded();
+});
+
+// ─── Specimen type ────────────────────────────────────────────────────────────
+// ─── Specimen categories ──────────────────────────────────────────────────────
+// imageDir: subdirectory under images/ containing this category's samples.
+// images:   filenames expected in that directory (no extension).
+//           Add or remove entries here as your image files change.
+const SPECIMEN_LABELS = {
+  'cc-basic': {
+    left:     'Questioned — Cartridge Case (Basic)',
+    right:    'Known — Cartridge Case (Basic)',
+    imageDir: 'images/cc-basic-images',
+    images:   ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','K1','K2','K3','K4','K5','K6','K7','K8']
+  },
+  'cc-intermediate': {
+    left:     'Questioned — Cartridge Case (Intermediate)',
+    right:    'Known — Cartridge Case (Intermediate)',
+    imageDir: 'images/cc-intermediate-images',
+    images:   ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','K1','K2','K3','K4','K5','K6','K7','K8']
+  },
+  'cc-advanced': {
+    left:     'Questioned — Cartridge Case (Advanced)',
+    right:    'Known — Cartridge Case (Advanced)',
+    imageDir: 'images/cc-advanced-images',
+    images:   ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','K1','K2','K3','K4','K5','K6','K7','K8']
+  },
+  'bullet-basic': {
+    left:     'Questioned — Fired Bullet (Basic)',
+    right:    'Known — Fired Bullet',
+    imageDir: 'images/bullet-basic-images',
+    images:   ['Q1-1','Q1-2','Q1-3','Q1-4','Q1-5','Q1-6','K1-1','K1-2','K1-3','K1-4','K1-5','K1-6']
+  },
+  'bullet-intermediate': {
+    left:     'Questioned — Fired Bullet (Intermediate)',
+    right:    'Known — Fired Bullet',
+    imageDir: 'images/bullet-intermediate-images',
+    images:   ['B1-1','B1-2','B1-3','B1-4','B1-5','B1-6','B2-1','B2-2','B2-3','B2-4','B2-5','B2-6','B1-1','B1-2','B1-3','B1-4','B1-5','B1-6','B2-1','B2-2','B2-3','B2-4','B2-5','B2-6']
+  },
+  'bullet-advanced': {
+    left:     'Questioned — Fired Bullet (Advanced)',
+    right:    'Known — Fired Bullet',
+    imageDir: 'images/bullet-advanced-images',
+    images:   ['Q1-1','Q1-2','Q1-3','Q1-4','Q1-5','Q1-6','Q2-1','Q2-2','Q2-3','Q2-4','Q2-5','Q2-6','Q3-1','Q3-2','Q3-3','Q3-4','Q3-5','Q3-6','K1-1','K1-2','K1-3','K1-4','K1-5','K1-6','K2-1','K2-2','K2-3','K2-4','K2-5','K2-6']
+  },
+  'toolmark': {
+    left:     'Questioned — Toolmark',
+    right:    'Known — Toolmark',
+    imageDir: 'images/toolmark-images',
+    images:   ['Q1','Q2','Q3','Q4','Q5','Q6','K1','K2']
+  }
+};
+
+// Populate the gallery from a category config entry.
+// Tries .jpg then .png — whichever loads first wins; skips silently if neither loads.
+function populateGallery(categoryKey) {
+  const gallery = document.getElementById('thumbGallery');
+  gallery.innerHTML = '';
+
+  const spec = SPECIMEN_LABELS[categoryKey];
+  if (!spec) return;
+
+  spec.images.forEach(name => {
+    // Build item shell immediately so order is preserved
+    const item = document.createElement('div');
+    item.className = 'thumb-item';
+    item.dataset.name = name;
+
+    const img = document.createElement('img');
+    img.className = 'thumb';
+    img.alt = name;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'thumb-name';
+    lbl.textContent = name;
+
+    item.append(img, lbl);
+    gallery.appendChild(item);
+    img.addEventListener('click', handleThumbClick);
+
+    // Try jpg, fallback to png; remove item if neither loads
+    const tryLoad = (exts) => {
+      if (!exts.length) { item.remove(); return; }
+      const src = `${spec.imageDir}/${name}.${exts[0]}`;
+      img.onerror = () => tryLoad(exts.slice(1));
+      img.onload  = () => { img.dataset.path = src; img.onerror = null; };
+      img.src = src;
+    };
+    tryLoad(['jpg','jpeg','png','tif','tiff']);
+  });
+}
+
+document.getElementById('specimenType').addEventListener('change', (e) => {
+  const spec = SPECIMEN_LABELS[e.target.value];
+  document.getElementById('leftTitle').textContent  = spec.left;
+  document.getElementById('rightTitle').textContent = spec.right;
+  populateGallery(e.target.value);
+});
+
+// Populate gallery for the default category on load
+populateGallery(document.getElementById('specimenType').value);
+
+// ─── Initial state ────────────────────────────────────────────────────────────
+applyTone();
+updateReadout('left');
+updateReadout('right');
+</script>
+</body>
+</html>
