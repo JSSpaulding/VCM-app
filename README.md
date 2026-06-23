@@ -1,6 +1,7 @@
 # Virtual Comparison Microscope Web Interface
 ## Overview
 Welcome to the Forensic Virtual Comparison Microscope (VCM). This web-based application simulates the functionality of a forensic comparison microscope and allows users to examine and compare digital images of cartridge cases, bullets, and toolmarks. The tool enables side-by-side viewing, documentation, navigation, and alignment of questioned and known specimens to facilitate the observation of class and individual characteristics commonly evaluated during forensic firearm and toolmark examinations.  
+
 This VCM is intended as an educational resource for students learning the principles of comparative examination in forensic science. Through guided exercises, users will develop skills in observing microscopic features, assessing microscopic agreement and disagreement between specimens, and applying forensic reasoning to reach conclusions.  
 
 ## Contents
