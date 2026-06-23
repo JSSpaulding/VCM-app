@@ -1,17 +1,17 @@
 # Virtual Comparison Microscope Web Interface
 ## Overview
-Welcome to the Forensic Virtual Comparison Microscope (VCM). This web-based application simulates the functionality of a forensic comparison microscope and allows users to examine and compare digital images of cartridge cases, bullets, and toolmarks. The tool enables side-by-side viewing, documentation, navigation, and alignment of questioned and known specimens to facilitate the observation of class and individual characteristics commonly evaluated during forensic firearm and toolmark examinations.
-This VCM is intended as an educational resource for students learning the principles of comparative examination in forensic science. Through guided exercises, users will develop skills in observing microscopic features, assessing microscopic agreement and disagreement between specimens, and applying forensic reasoning to reach conclusions.
+Welcome to the Forensic Virtual Comparison Microscope (VCM). This web-based application simulates the functionality of a forensic comparison microscope and allows users to examine and compare digital images of cartridge cases, bullets, and toolmarks. The tool enables side-by-side viewing, documentation, navigation, and alignment of questioned and known specimens to facilitate the observation of class and individual characteristics commonly evaluated during forensic firearm and toolmark examinations.  
+This VCM is intended as an educational resource for students learning the principles of comparative examination in forensic science. Through guided exercises, users will develop skills in observing microscopic features, assessing microscopic agreement and disagreement between specimens, and applying forensic reasoning to reach conclusions.  
 
 ## Contents
-[Accessing the Virtual Comparison Microscope](#Accessing-the-Virtual-Comparison-Microscope)
-[Understanding the Interface](#Understanding-the-Interface)
-[Example Student Examination Procedure](#Example-Student-Examination-Procedure)
+[Accessing the Virtual Comparison Microscope](#Accessing-the-Virtual-Comparison-Microscope)  
+[Understanding the Interface](#Understanding-the-Interface)  
+[Example Student Examination Procedure](#Example-Student-Examination-Procedure)  
 
 ## Accessing the Virtual Comparison Microscope
-1. Open a browser (Chrome, Firefox, or Edge recommended). Navigate to: [https://jsspaulding.github.io/VCM-app](https://jsspaulding.github.io/VCM-app) 
-2. The interface will display two image panels side by side. The left panel is the Questioned (Q) specimen field, and the right panel is the Known (K) specimen field.
-3. Select the appropriate “Specimen Type” dropdown in the toolbar to begin the exercise of choice. It is recommended to begin with the “Cartridge Case – Basic” tier.
+1. Open a browser (Chrome, Firefox, or Edge recommended). Navigate to: [https://jsspaulding.github.io/VCM-app](https://jsspaulding.github.io/VCM-app)  
+2. The interface will display two image panels side by side. The left panel is the Questioned (Q) specimen field, and the right panel is the Known (K) specimen field.  
+3. Select the appropriate “Specimen Type” dropdown in the toolbar to begin the exercise of choice. It is recommended to begin with the “Cartridge Case – Basic” tier.  
 
 ## Understanding the Interface
 Locate and identify each of the following controls before proceeding. Check each item as you find it:
