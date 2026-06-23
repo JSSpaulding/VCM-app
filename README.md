@@ -9,6 +9,7 @@ This VCM is intended as an educational resource for students learning the princi
 [Understanding the Interface](#Understanding-the-Interface)  
 [Example Student Examination Procedure](#Example-Student-Examination-Procedure)  
 [Usage and Distribution](#Usage-and-Distribution)  
+[Miscellaneous](#Miscellaneous) 
 
 ## Accessing the Virtual Comparison Microscope
 1. Open a browser (Chrome, Firefox, or Edge recommended). Navigate to: [https://jsspaulding.github.io/VCM-app](https://jsspaulding.github.io/VCM-app)  
@@ -99,3 +100,6 @@ This work is licensed under a
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
 [cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
+
+## Miscellaneous
+For support or answer keys, please contact [jspaul@bgsu.edu](mailto:jspaul@bgsu.edu).
