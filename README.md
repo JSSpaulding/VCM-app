@@ -29,7 +29,8 @@ Locate and identify each of the following controls before proceeding. Check each
 -	Keyboard shortcuts: A/D = rotate left/right; Arrow keys = pan; Tab = switch active field
 
 ## Example Student Examination Procedure
-Follow this procedure for every comparison pair in all Specimen Type tiers.
+Follow this procedure for every comparison pair in all Specimen Type tiers.  
+
 **Step 1: Load the Specimen Pair**
 1. In the Sample Gallery, confirm the correct tier is selected in the Specimen Type dropdown.
 2. Set the “Load into” selector to “Left (Q).” Click the questioned specimen thumbnail (Q1, Q2, etc.). The image will appear in the left field.
@@ -37,7 +38,7 @@ Follow this procedure for every comparison pair in all Specimen Type tiers.
 4. Confirm the sample name badge appears beneath each image in its respective field.
 Alternately, you can upload an image to the respective sample view from your computer using the “Choose File” buttons at the top of the interface.
 
-**Step 2: Initial Survey at Low Magnification**
+**Step 2: Initial Survey at Low Magnification**  
 1. Set both objective selectors to a lower power (e.g., 4x) where you can visualize the entire sample. Use this magnification for your initial assessment.
 2. Set the Mode selector to “Locked.” Pan and zoom will now operate on both fields simultaneously, making it easier to compare equivalent areas.
 3. Examine the overall appearance of each specimen. For cartridge cases: identify the firing pin impression, the breech face impressions present, and any other markings of note on the primer surface. For fired bullets, note the general appearance of the land engraved areas. 
@@ -50,14 +51,14 @@ The VCM interface allows you to add annotations directly to the images which you
   a. Click “Set tie-pt (L)” and click on a distinctive striation mark in the left field. Click “Set tie-pt (R)” and click on the corresponding mark in the right field.
   b. Click “Align to tie points.” The left field will translate so the two marks coincide. Examine the surrounding area for correspondence of adjacent features.
 
-**Step 3: Illuminate for Surface Relief**
-Important note: some samples were captured with coaxial and/or oblique lighting and may be best visualized with an intensity of zero.
+**Step 3: Illuminate for Surface Relief**  
+Important note: some samples were captured with coaxial and/or oblique lighting and may be best visualized with an intensity of zero.  
 6. Switch the Mode selector to “Independent.”
 7. In the Illumination panel, adjust the Light Angle slider or click the angle dial to position the light at approximately 45°. Observe how striations and surface impressions/texture become visible as light and shadow relief.
 8. Adjust the Intensity slider (start low and increase as needed) and Coaxial Mix slider (start at 25–30%). The goal is to maximize the visibility of individual marks without losing detail in shadows.
 9. Apply the same illumination settings to both fields. Note that different specimens may benefit from slightly different angles, you may adjust independently per field.
 
-**Step 4: Systematic Examination at Higher Magnification**
+**Step 4: Systematic Examination at Higher Magnification**  
 10. Increase the objective power for detailed examination.
 11. Work through each major feature area systematically and capture micrograph captures of significant features:
   a. Breechface impressions: marks impressed into the primer and surrounding surface by machined imperfections on the firearm’s bolt face. Examine the pattern, density, and angular orientation.
@@ -71,9 +72,9 @@ Important note: some samples were captured with coaxial and/or oblique lighting 
   c. Evaluate individual characteristics for agreement or disagreement
   d. Rotate, tilt, and adjust lighting to reveal striated or impressed detail
   e. Document all observed similarities and differences. See note on Annotation tool in Step 4.
-Once aligned, use of the “Locked” function mode will move the samples simultaneously which will assist in evaluation of feature prevalence on both samples. 
+Once aligned, use of the “Locked” function mode will move the samples simultaneously which will assist in evaluation of feature prevalence on both samples.  
 
-**Step 5: Reach and Document Conclusions**
+**Step 5: Reach and Document Conclusions**  
 13. Based on your examination, reach a conclusion using the AFTE framework:
   a. **Source Identification:** conclusion that two toolmarks originated from the same source. This conclusion is an examiner’s opinion that all observed class characteristics are in agreement and the quality and quantity of corresponding individual characteristics is such that the examiner would not expect to find that same combination of individual characteristics repeated in another source and has found insufficient disagreement of individual characteristics to conclude they originated from different sources.
   b. **Inconclusive:** conclusion that all observed class characteristics are in agreement but there is insufficient quality and/or quantity of corresponding individual characteristics such that the examiner is unable to identify or exclude the two toolmarks as having originated from the same source.
