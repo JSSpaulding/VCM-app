@@ -12,7 +12,7 @@ This VCM is intended as an educational resource for students learning the princi
 [Miscellaneous](#Miscellaneous) 
 
 ## Accessing the Virtual Comparison Microscope
-1. Open a browser (Chrome, Firefox, or Edge recommended). Navigate to: [https://jsspaulding.github.io/VCM-app](https://jsspaulding.github.io/VCM-app)  
+1. Open a browser (Firefox or Safari recommended, *currently not working with Chrome*). Navigate to: [https://jsspaulding.github.io/VCM-app](https://jsspaulding.github.io/VCM-app)  
 2. The interface will display two image panels side by side. The left panel is the Questioned (Q) specimen field, and the right panel is the Known (K) specimen field.  
 3. Select the appropriate "Specimen Type" dropdown in the toolbar to begin the exercise of choice. It is recommended to begin with the "Cartridge Case – Basic" tier.  
 
