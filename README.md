@@ -29,6 +29,10 @@ Locate and identify each of the following controls before proceeding. Check each
 -	*Annotation tools (side panel):* place point markers, arrows, region-of-interest boxes, and text labels
 -	*Keyboard shortcuts:* A/D = rotate left/right; Arrow keys = pan; Tab = switch active field
 
+A screen capture of the VCM user interface with labels is provided below.  
+
+![VCM-UI](VCM-UI-labelled.png)
+
 ## Example Student Examination Procedure
 Follow this procedure for every comparison pair in all Specimen Type tiers.  
 
