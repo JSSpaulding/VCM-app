@@ -35,7 +35,7 @@ A screen capture of the VCM user interface with labels is provided below.
 ![VCM-UI](VCM-UI-labelled.png)
 
 ## Example Student Examination Procedure
-Follow this procedure for every comparison pair in all Specimen Type tiers. I have also provided a [complete laboratory protocol with fillable answer sheets](VCM-lab-Protocol.pdf) that is used in my introductory course.  
+Follow this procedure for every comparison pair in all Specimen Type tiers. I have also provided a [complete laboratory protocol with fillable answer sheets](VCM-Lab-Protocol.pdf) that is used in my introductory course.  
 
 **Step 1: Load the Specimen Pair**
 1. In the Sample Gallery, confirm the correct tier is selected in the Specimen Type dropdown.
