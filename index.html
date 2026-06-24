@@ -713,7 +713,12 @@ class Viewer {
       return diff < Math.abs(((this.lightAngle - best + 540) % 360) - 180) ? a : best;
     }, 0);
     const embossId = useOblique ? `emboss${nearestAngle}` : 'embossNone';
-    const obliqueStr = `url(#${embossId})`;
+    // Chrome compatibility patch:
+    // Chrome does not reliably support SVG filter references such as
+    // url(#emboss45) inside CanvasRenderingContext2D.filter.
+    // Preserve the lighting effect using brightness/contrast adjustments
+    // while avoiding SVG filter URLs.
+    const supportsSvgCanvasFilter = false;
 
     // Coaxial mix: a second brightness pass that softens the emboss
     const coaxBright = Math.round(100 + (this.coaxialMix / 100) * 40);
