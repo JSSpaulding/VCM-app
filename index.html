@@ -740,7 +740,12 @@ class Viewer {
       const obliqueIntensity = this.lightIntensity / 100;
       // Increase contrast proportional to oblique intensity to simulate relief shadows
       const reliefContrast = Math.round(100 + obliqueIntensity * 120);
-      f += ` ${obliqueStr} contrast(${reliefContrast}%) brightness(${coaxBright}%)`;
+
+      if (supportsSvgCanvasFilter) {
+        f += ` url(#${embossId}) contrast(${reliefContrast}%) brightness(${coaxBright}%)`;
+      } else {
+        f += ` contrast(${reliefContrast}%) brightness(${coaxBright}%)`;
+      }
     }
     if (this.edgeEnhance) f += ' contrast(250%) brightness(105%)';
     if (channelFilter) f += channelFilter;
