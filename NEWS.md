@@ -1,4 +1,9 @@
-# VCM v. 2.2.0. (current)
+# VCM v. 2.2.1. (current)
+
+* Chrome patch : fix SVG filter references
+* Google Analytics tag addition to monitor traffic, engagement, duration of activities
+
+# VCM v. 2.2.0.
 
 * Github Pages web launch
 
